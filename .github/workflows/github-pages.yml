@@ -26,15 +26,9 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
+      # base 由 vite.config.js 根据 GITHUB_REPOSITORY 自动解析（无需再设 VITE_BASE）
       - name: Build
-        run: |
-          NAME="${{ github.event.repository.name }}"
-          if [[ "$NAME" == *.github.io ]]; then
-            export VITE_BASE="/"
-          else
-            export VITE_BASE="/$NAME/"
-          fi
-          npm run build
+        run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

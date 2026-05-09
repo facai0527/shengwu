@@ -1,10 +1,25 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// GitHub Pages「项目站点」地址为 https://<用户>.github.io/<仓库名>/
-// 构建前设置环境变量：VITE_BASE=/<仓库名>/
-// 用户主页仓库 <用户名>.github.io 根域名部署时用 VITE_BASE=/
+/**
+ * GitHub Pages 项目站：https://<用户>.github.io/<仓库名>/
+ * - 本地开发：base 为 /
+ * - GitHub Actions：自动读取 GITHUB_REPOSITORY（如 facai0527/shengwu → /shengwu/）
+ * - 也可手动：VITE_BASE=/仓库名/ npm run build
+ */
+function resolveBase() {
+  const manual = process.env.VITE_BASE?.trim()
+  if (manual) {
+    return manual.endsWith('/') ? manual : `${manual}/`
+  }
+  const gh = process.env.GITHUB_REPOSITORY || ''
+  const repo = gh.split('/')[1]
+  if (!repo) return '/'
+  if (repo.endsWith('.github.io')) return '/'
+  return `/${repo}/`
+}
+
 export default defineConfig({
   plugins: [vue()],
-  base: process.env.VITE_BASE || '/',
+  base: resolveBase(),
 })
