@@ -1,11 +1,13 @@
 # 推送到 main 后构建并部署到 GitHub Pages。
-# 使用前请在仓库 Settings → Pages → Build and deployment → Source 选 “GitHub Actions”。
+# Settings → Pages → Source 选 “GitHub Actions”。
+# 官方说明见：https://vitejs.dev/guide/static-deploy.html
 
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main, master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,28 +19,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-      - run: npm ci
-      # base 由 vite.config.js 根据 GITHUB_REPOSITORY 自动解析（无需再设 VITE_BASE）
-      - name: Build
-        run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
+  # 单 job：与 Vite 官方示例一致；上传前必须 configure-pages，否则 deploy 易 10 分钟超时
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
